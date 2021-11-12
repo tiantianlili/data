@@ -1,0 +1,51 @@
+Gephi
+#在windows下载cytoscape或是gephi等软件时常需要依赖其他组件，建议可以把最新版本的java、python、jdk、R等常用的基础软件与要用的软件下载到同一位置。关于windows下软件的互相依赖、环境变量设置等问题尚未完全掌握，只要能用就行。
+
+使用psych中corr.test函数计算得出的csv相关性文件导入软件，导入edge边文件和node点文件。
+
+library(psych)
+ARG=read.table("ARG.txt", row.names=1, header=T, sep="\t")
+MGE=read.table("MGE.txt", row.names=1, header=T, sep="\t")
+#导入ARG数据、MGE数据，首列为样品名，注意数据表头不能含有空格、括号、引号等，数据尽量不使用科学计数法
+arg<-ARG[,which(colSums(ARG)>0)] 
+mge<-MGE[,which(colSums(MGE)>0)]
+#删除全为0的列
+
+result_pair=data.frame(print(corr.test(mge,arg,use="pairwise",method="spearman",adjust="fdr",alpha=.05,ci=TRUE, minlength=100),short=FALSE))
+#计算相关性，调整结果格式；method默认为pearson,pearson相关系数适用于连续性变量，且变量服从正态分布的情况，为参数性的相关系数，而spearman等相关系数适用于连续性及分类型变量，为非参数性的相关系数；minlength是简写的名字长度，可以设置大一点以显示全部名字，方便后续调整；adjust是p值矫正参数，默认使用holm矫正，Bonferroni校正方法比较传统严格，统计几十次时可尝试使用，而FDR(BH/BY)较为温和，应用最多；alpha=.05即置信区间为95%。
+
+#计算时间较长，可调整参数，暂未实操
+pair=rownames(result_pair)
+result_pair2=data.frame(result_pair[, c(2, 4)], pair) 
+result_pair3=data.frame(result_pair2[order(result_pair2[,"raw.p"], decreasing=F),])
+#提取信息，并根据p值排序
+n=0
+for(i in 1:N)
+{
+    if(result_pair3[i, 2]<=0.05)
+    {
+        n=n+1    
+    }
+}
+#此循环为统计p≤0.05，即显著相关的数量。其中N为上一步result_pair2中项目的数量。最后统计出n即为显著相关的数量
+result_pair4=result_pair3[result_pair3$raw.p<=0.05, ]
+write.table(result_pair4, file="corr.txt", sep="\t", row.names=F, quote=F)#提取并保存结果
+
+#边文件为必须的，第一列为source，第二列为target，即表示source对target的影响（有向），第三列为weight即相关性的绝对值，第四列为correction即相关性（含正负），第五列为±1；点文件第一列为ID，应为所有的source和target名，第二列为label即显示的标签，后续可自行添加用于着色
+
+打开Gephi⽂件，点击“⽂件—导⼊电⼦表格”，导⼊结点⽂件，图的类型，选择“⽆向的”。同样导入边文件，有向的，选择“Append to existing workspace”
+
+
+
+
+在“概览”界⾯的“布局”中，选择“Fruchterman Reingold”，点击“运⾏”，待图形稳定后，点 击“停⽌”。
+
+
+
+在“外观”中，点击“节点”，“颜⾊”，“Partition”，选择”details”，点击应⽤，即根据节点不同的信息去上色。
+在“外观”中，点击“节点”，“⼤⼩”，“Ranking”，选择”度”，点击应⽤。即以不同度区别不同节 点的⼤⼩。如果看不到⼤⼩变化，调整最⼤尺⼨。
+在“外观”中，点击“边”，“颜⾊”，“Partition”，选择”cor”，点击应⽤。即以颜⾊区分相关性的正负。
+在“预览”界⾯，点击“刷新”，可显⽰最终的图形。可在“预览设置”中选择“显⽰标签”，具体的信息节点、连线可慢慢调整。
+在网络图右侧，统计选项卡中，点击“运⾏”，可计算网络和节点的参数。
+
+
